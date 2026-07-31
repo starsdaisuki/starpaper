@@ -1,10 +1,15 @@
-# StarPaper 架构说明
+# StarPaper architecture
 
-StarPaper 是一个 SwiftPM 可执行目标。应用使用 AppKit 管理生命周期和桌面窗口，使用 SwiftUI 构建设置界面，并通过 AVFoundation 播放本地视频。
+**English** · [简体中文](ARCHITECTURE.zh-CN.md)
 
-## 桌面窗口
+StarPaper is a SwiftPM executable target. It manages its lifecycle and desktop windows
+with AppKit, builds the settings interface with SwiftUI, and plays local video through
+AVFoundation.
 
-每块显示器对应一个无边框 `NSWindow`。窗口位于桌面图片与 Finder 桌面图标之间，忽略鼠标事件，并跟随所有 Space：
+## Desktop windows
+
+Each display gets one borderless `NSWindow`. The window sits between the desktop picture
+and the Finder desktop icons, ignores mouse events, and follows every Space:
 
 ```swift
 window.level = NSWindow.Level(
@@ -19,25 +24,32 @@ window.collectionBehavior = [
 window.ignoresMouseEvents = true
 ```
 
-如果用户选择覆盖桌面图标，窗口层级会相应提高。显示器连接状态变化时，`WallpaperEngine` 会根据当前屏幕重新建立播放单元。
+The window level is raised accordingly if the user chooses to cover the desktop icons.
+When display connections change, `WallpaperEngine` rebuilds the playback units from the
+current set of screens.
 
-## 播放单元
+## Playback units
 
-每个 `VideoWallpaperView` 包含三层：
+Each `VideoWallpaperView` contains three layers:
 
 ```text
 containerLayer
-├── playerLayer   AVPlayerLayer，负责视频与 Core Image 滤镜
-└── dimLayer      黑色遮罩，负责等比压暗画面
+├── playerLayer   AVPlayerLayer, carrying the video and Core Image filters
+└── dimLayer      black mask that dims the picture proportionally
 ```
 
-正常循环播放使用 `AVQueuePlayer` 与 `AVPlayerLooper`，避免在视频末尾手动 seek 造成停顿。
+Normal looping uses `AVQueuePlayer` with `AVPlayerLooper`, which avoids the stutter of
+seeking manually at the end of the video.
 
-播放列表的“播完切换”模式不能使用 looper，因为 looper 不会产生可用于换片的最终结束事件。此模式改用单个 item 和 `AVPlayerItemDidPlayToEndTime`；多显示器环境中只由主屏播放单元通知选择器，避免一次结束触发多次切换。
+A playlist's "switch when finished" mode cannot use the looper, because the looper never
+produces a usable final end event to switch on. That mode uses a single item and
+`AVPlayerItemDidPlayToEndTime` instead. With multiple displays, only the main screen's
+playback unit notifies the selector, so one end event does not trigger several switches.
 
-## 裁剪模型
+## Crop model
 
-StarPaper 保存 `focusX`、`focusY` 与 `zoom`，而不是保存某个屏幕上的固定裁剪矩形。设屏幕尺寸为 `W × H`，视频尺寸为 `vw × vh`：
+StarPaper stores `focusX`, `focusY` and `zoom` rather than a fixed crop rectangle for one
+particular screen. Given a screen of `W × H` and a video of `vw × vh`:
 
 ```text
 s = max(W / vw, H / vh) × zoom
@@ -47,65 +59,90 @@ x = -(w - W) × focusX
 y = -(h - H) × focusY
 ```
 
-`playerLayer.frame` 直接设置为 `(x, y, w, h)`，父层使用 `masksToBounds` 裁掉超出部分。不同宽高比的显示器会用同一组 focus 与 zoom 独立计算，因此裁剪意图可以跨屏幕复用。
+`playerLayer.frame` is set directly to `(x, y, w, h)`, and the parent layer uses
+`masksToBounds` to crop the overflow. Displays with different aspect ratios compute
+independently from the same focus and zoom, so a crop intent is reusable across screens.
 
-## 画面处理
+## Image processing
 
-需要画面调节时，`AVPlayerLayer.filters` 使用 Core Image 滤镜链。主要顺序为：
-
-```text
-曝光 → 高光/阴影 → 伽马 → 亮度/对比度/饱和度
-     → 鲜艳度 → 色温/色调 → 锐化 → 暗角 → 模糊
-```
-
-实现约束：
-
-- 挂滤镜前必须设置 `layerUsesCoreImageFilters = true`。
-- 不原地修改已经挂载的 `CIFilter`；设置变化时重建滤镜数组。
-- `CITemperatureAndTint` 的 neutral / target 语义与常见调色滑杆方向不同，转换时需要处理方向。
-- 模糊会消耗画面边缘，因此播放器层会按模糊半径略微放大，再由父层裁切。
-- 变暗使用独立黑色 `CALayer` 的 opacity，而不是 `CIColorControls` 的 brightness，避免加法偏移造成灰雾感。
-- 所有画面参数为默认值时不挂滤镜，保留系统的视频合成路径。
-
-## 播放来源
-
-`MediaSelector` 集中决定当前视频来源：
+When image adjustment is needed, `AVPlayerLayer.filters` carries a Core Image filter
+chain, ordered roughly as:
 
 ```text
-日程 > 播放列表 > 单个视频
+exposure → highlights/shadows → gamma → brightness/contrast/saturation
+        → vibrance → temperature/tint → sharpness → vignette → blur
 ```
 
-日程按白天和夜间时间段选择文件；播放列表维护顺序或随机队列，并支持结束切换与定时切换。播放引擎只消费选择器给出的路径，不在各个显示器内重复实现选择逻辑。
+Implementation constraints:
 
-## 播放状态与省电
+- `layerUsesCoreImageFilters = true` must be set before attaching any filter.
+- Do not mutate an already-attached `CIFilter` in place; rebuild the filter array when
+  settings change.
+- `CITemperatureAndTint`'s neutral / target semantics do not match the direction of a
+  typical colour-grading slider, so the conversion has to handle the direction.
+- Blur consumes the edges of the picture, so the player layer is enlarged slightly in
+  proportion to the blur radius and cropped back by the parent layer.
+- Dimming uses the opacity of a separate black `CALayer` rather than `CIColorControls`'
+  brightness, which is an additive offset and produces a grey haze.
+- When every image parameter is at its default, no filter is attached and the system's
+  video composition path is preserved.
 
-`WallpaperEngine.updatePlayback()` 汇总所有播放条件，避免不同事件处理器互相调用 `play()` / `pause()`：
+## Playback sources
 
-- 用户手动暂停
-- 窗口遮挡状态
-- 屏幕锁定
-- 系统睡眠
-- 低电量模式
-- 电池供电
+`MediaSelector` is the single place that decides the current video source:
 
-窗口遮挡使用 `NSWindow.didChangeOcclusionStateNotification`。电源状态使用 IOKit 的 `IOPSNotificationCreateRunLoopSource` 接入主 run loop，不进行轮询。
+```text
+schedule > playlist > single video
+```
 
-## 设置与外部控制
+The schedule picks a file by day and night time ranges; the playlist maintains a
+sequential or shuffled queue and supports switching on end or at an interval. The playback
+engine only consumes the path the selector hands it, and does not reimplement selection
+logic inside each display.
 
-`AppSettings` 是单例 `ObservableObject`，配置写入 `UserDefaults`。SwiftUI 观察设置对象，播放引擎也订阅同一状态。
+## Playback state and power saving
 
-外部 `defaults write` 或 CLI 修改配置后，`UserDefaults.didChangeNotification` 触发重新加载。加载必须幂等，保存过程还必须防止逐键通知重入；相关不变量见 [维护者笔记](MAINTAINER_NOTES.md)。
+`WallpaperEngine.updatePlayback()` aggregates every playback condition, so that different
+event handlers never call `play()` / `pause()` against each other:
 
-“下一个”不是持续状态，CLI 会向 `command` 键写入带唯一后缀的值，应用据此把每次写入识别为独立动作。
+- Manual pause by the user
+- Window occlusion state
+- Screen locked
+- System asleep
+- Low Power Mode
+- Running on battery
 
-## 全局快捷键
+Occlusion uses `NSWindow.didChangeOcclusionStateNotification`. Power state is wired into
+the main run loop through IOKit's `IOPSNotificationCreateRunLoopSource`, with no polling.
 
-快捷键使用 Carbon `RegisterEventHotKey`，只注册用户明确设置的组合。这样不需要辅助功能权限，也不需要全局监听键盘事件。
+## Settings and external control
 
-## 本地化
+`AppSettings` is a singleton `ObservableObject` whose configuration is written to
+`UserDefaults`. SwiftUI observes the settings object, and the playback engine subscribes to
+the same state.
 
-中英文字符串保存在 `Localization.swift` 的同一张表中。`T("key")` 根据 `AppSettings.shared.language` 取值；SwiftUI 设置变化后自然重绘，AppKit 菜单通过语言订阅重新构建。
+After an external `defaults write` or a CLI change, `UserDefaults.didChangeNotification`
+triggers a reload. Loading must be idempotent, and saving must additionally guard against
+re-entry from per-key notifications; the relevant invariants are in the
+[maintainer notes](MAINTAINER_NOTES.md).
 
-## 本地数据边界
+"Next" is not a persistent state, so the CLI writes a value with a unique suffix to the
+`command` key, letting the app recognise each write as a distinct action.
 
-当前版本没有网络客户端或遥测 SDK。视频文件由 AVFoundation 从本地路径读取；文件路径、播放列表和其他设置保存在当前用户的 `UserDefaults` 域中。
+## Global hotkeys
+
+Hotkeys use Carbon's `RegisterEventHotKey` and register only the combinations the user has
+explicitly configured. This needs no Accessibility permission and no global keyboard
+monitoring.
+
+## Localization
+
+English and Chinese strings live in one table in `Localization.swift`. `T("key")` reads
+from `AppSettings.shared.language`; SwiftUI redraws naturally after a settings change, and
+AppKit menus are rebuilt through a language subscription.
+
+## Local data boundary
+
+This version has no network client and no telemetry SDK. Video files are read from local
+paths by AVFoundation; file paths, playlists and other settings are stored in the current
+user's `UserDefaults` domain.

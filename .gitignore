@@ -20,3 +20,16 @@ DerivedData/
 .DS_Store
 *.xcuserstate
 Resources/AppIcon.iconset/
+
+# Local AI/work-session context is never part of the public source tree.
+CLAUDE*.md
+AGENTS*.md
+.claude/
+.codex/
+.cursor/
+MEMORY.md
+**/session-handoff*.md
+**/handoff*.md
+*.jsonl
+.env
+.env.*

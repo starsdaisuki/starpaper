@@ -1,61 +1,71 @@
 # StarPaper
 
-把本地视频变成 macOS 动态壁纸。StarPaper 常驻菜单栏，不显示 Dock 图标；支持多显示器、自定义裁剪、画面调节、播放列表与省电自动暂停。
+**English** · [简体中文](README.zh-CN.md)
 
-## 主要功能
+Turn a local video into a macOS live wallpaper. StarPaper lives in the menu bar with no
+Dock icon, and supports multiple displays, custom cropping, image adjustment, playlists
+and power-saving auto-pause.
 
-- 播放 mp4 / mov 等 macOS 原生支持的视频，并无缝循环
-- 多显示器同步显示，支持填充、适应和拉伸
-- 自定义裁剪焦点与缩放比例
-- 调整曝光、亮度、对比度、色彩、模糊、锐化、暗角和变暗遮罩
-- 播放列表、随机播放、定时切换与白天 / 夜间日程
-- 被窗口遮挡、锁屏或进入低电量模式时自动暂停
-- 全局快捷键、开机自启和中 / 英界面
-- 通过 `starpaper` 命令行即时切换视频或调整常用参数
+## Features
 
-StarPaper 使用公开的 macOS API，不需要关闭 SIP，也不需要辅助功能或屏幕录制权限。
+- Plays mp4, mov and other formats macOS supports natively, looping seamlessly
+- Mirrors across multiple displays with fill, fit and stretch modes
+- Custom crop focus and zoom
+- Adjusts exposure, brightness, contrast, colour, blur, sharpness, vignette and a dimming mask
+- Playlists, shuffle, timed switching and day / night schedules
+- Auto-pauses when fully covered by a window, when the screen locks, or in Low Power Mode
+- Global hotkeys, launch at login, and an English / Chinese interface
+- Switches videos or adjusts common parameters instantly from the `starpaper` command line
 
-## 下载与安装
+StarPaper uses public macOS APIs. It does not require disabling SIP, nor Accessibility or
+Screen Recording permissions.
 
-当前 Release 需要 macOS 14 或更高版本，并提供 Apple silicon 构建。
+## Download and install
 
-1. 从 [Releases](https://github.com/starsdaisuki/starpaper/releases) 下载 `StarPaper.dmg`。
-2. 打开 DMG，把 `StarPaper.app` 拖进 `/Applications`。
-3. 首次启动时选择一个本地视频。
+The current release requires macOS 14 or later and ships an Apple silicon build.
 
-当前发布包使用 ad-hoc 签名，未经过 Apple 公证。Gatekeeper 如果提示应用“已损坏”或无法打开，请确认文件来自本仓库的 Release，再运行：
+1. Download `StarPaper.dmg` from [Releases](https://github.com/starsdaisuki/starpaper/releases).
+2. Open the DMG and drag `StarPaper.app` into `/Applications`.
+3. Pick a local video the first time it launches.
+
+The current release is ad-hoc signed and has not been notarized by Apple. If Gatekeeper
+reports that the app is damaged or refuses to open it, confirm the file came from this
+repository's Releases, then run:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/StarPaper.app
 ```
 
-也可以[从源码构建](CONTRIBUTING.md)，本地构建通常不需要移除 quarantine 属性。
+You can also [build from source](CONTRIBUTING.md); a local build usually needs no
+quarantine removal.
 
-## 快速使用
+## Quick start
 
-- 菜单栏图标可以暂停、继续、切换下一个视频或打开设置。
-- 设置窗口包含内容、画面、声音、省电、日程、快捷键和通用选项。
-- 默认静音；多显示器环境中只有主屏播放器输出声音。
-- 日程启用时优先级最高，其次是播放列表，最后是单个视频。
+- The menu bar icon pauses, resumes, skips to the next video or opens Settings.
+- The Settings window covers content, image, sound, power, schedule, hotkeys and general options.
+- Muted by default; with multiple displays only the main screen's player outputs sound.
+- When a schedule is enabled it takes priority, then the playlist, then the single video.
 
-完整操作与命令行说明见 [使用指南](docs/USAGE.md)。
+See the [usage guide](docs/USAGE.md) for the full walkthrough and command-line reference.
 
-## 隐私
+## Privacy
 
-视频只在本机通过 AVFoundation 播放。当前版本不包含账号、网络请求、遥测或分析服务；所选视频路径和设置保存在本机的 `UserDefaults` 中。
+Videos are played locally through AVFoundation. This version contains no account system,
+network requests, telemetry or analytics. The selected video path and your settings are
+stored in `UserDefaults` on your own machine.
 
-## 已知限制
+## Known limitations
 
-- 所有显示器目前共用同一套视频与裁剪参数
-- 暂不支持图片、GIF、视频缩略图库或按日出日落自动切换
-- 发布包没有 Apple Developer 公证
+- All displays currently share one set of video and crop parameters
+- No support yet for images, GIFs, a video thumbnail library, or sunrise / sunset switching
+- Release builds are not notarized by Apple
 
-## 文档
+## Documentation
 
-- [使用指南](docs/USAGE.md)
-- [构建与贡献](CONTRIBUTING.md)
-- [架构说明](docs/ARCHITECTURE.md)
-- [维护者笔记](docs/MAINTAINER_NOTES.md)
+- [Usage guide](docs/USAGE.md)
+- [Building and contributing](CONTRIBUTING.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Maintainer notes](docs/MAINTAINER_NOTES.md)
 
 ## License
 

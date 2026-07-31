@@ -1,33 +1,39 @@
-# 构建与贡献
+# Building and contributing
 
-StarPaper 使用 SwiftPM 编译，再由 Makefile 手工组装 macOS `.app` bundle；仓库不包含 Xcode 工程。
+**English** · [简体中文](CONTRIBUTING.zh-CN.md)
 
-## 环境
+StarPaper compiles with SwiftPM, and the Makefile assembles the macOS `.app` bundle by
+hand. The repository contains no Xcode project.
 
-- macOS 14 或更高版本
-- Swift 6（Xcode 或 Command Line Tools）
+## Environment
+
+- macOS 14 or later
+- Swift 6 (Xcode or the Command Line Tools)
 - `make`
 
-## 常用命令
+## Common commands
 
 ```bash
-make build      # release 编译
-make bundle     # 编译并生成 build/StarPaper.app
-make run        # 结束旧实例、重新打包并启动
-make install    # 安装到 ~/Applications
-make test       # 在隔离的 UserDefaults suite 中运行设置层自检
-make link       # 把 CLI 链接到 ~/.local/bin
-make dmg        # 生成 build/StarPaper.dmg
-make icon       # 从 tools/make-icon.swift 重新生成应用图标
-make kill       # 只结束正在运行的实例
-make clean      # 删除 .build 与 build
+make build      # release build
+make bundle     # build and produce build/StarPaper.app
+make run        # kill the old instance, repackage and launch
+make install    # install into ~/Applications
+make test       # run the settings-layer self-test in an isolated UserDefaults suite
+make link       # link the CLI into ~/.local/bin
+make dmg        # produce build/StarPaper.dmg
+make icon       # regenerate the app icon from tools/make-icon.swift
+make kill       # only terminate the running instance
+make clean      # remove .build and build
 ```
 
-`make run` 和 `make kill` 会结束当前运行的 StarPaper 实例。只想验证编译时使用 `make build` 或 `make bundle`。
+`make run` and `make kill` terminate the currently running StarPaper instance. Use
+`make build` or `make bundle` when you only want to verify that it compiles.
 
-本地自用可以直接打开 `build/StarPaper.app`，不需要 DMG。DMG 是对外分发包装；当前 Makefile 使用 ad-hoc 签名，不执行 Apple 公证。
+For personal use you can open `build/StarPaper.app` directly; no DMG is needed. The DMG
+is packaging for distribution. The current Makefile uses ad-hoc signing and does not
+perform Apple notarization.
 
-## 代码结构
+## Code layout
 
 ```text
 Package.swift
@@ -36,31 +42,33 @@ Resources/
 ├── Info.plist
 └── AppIcon.icns
 bin/
-└── starpaper                  CLI 薄包装
+└── starpaper                  thin CLI wrapper
 tools/
-└── make-icon.swift            纯 Core Graphics 图标生成器
+└── make-icon.swift            pure Core Graphics icon generator
 Sources/StarPaper/
-├── main.swift                 NSApplication 启动入口
-├── AppDelegate.swift          菜单栏、主菜单与设置窗口
-├── AppSettings.swift          UserDefaults 设置模型
-├── Localization.swift         中英文字符串表
-├── VideoInfo.swift            视频尺寸与裁剪预览帧
-├── MediaSelector.swift        日程、播放列表、单视频选择
-├── LoginItem.swift            SMAppService 开机自启
-├── Hotkeys.swift              Carbon 全局快捷键
-├── WallpaperWindow.swift      桌面层窗口
-├── VideoWallpaperView.swift   播放、裁剪与滤镜图层
-├── WallpaperEngine.swift      多屏播放单元与播放决策
-├── PowerMonitor.swift         电源、锁屏与睡眠状态
-├── SettingsView.swift         SwiftUI 设置界面
-└── SelfTest.swift             隔离设置域自检
+├── main.swift                 NSApplication entry point
+├── AppDelegate.swift          menu bar, main menu and Settings window
+├── AppSettings.swift          UserDefaults settings model
+├── Localization.swift         English / Chinese string table
+├── VideoInfo.swift            video dimensions and crop preview frame
+├── MediaSelector.swift        schedule, playlist and single-video selection
+├── LoginItem.swift            SMAppService launch at login
+├── Hotkeys.swift              Carbon global hotkeys
+├── WallpaperWindow.swift      desktop-layer window
+├── VideoWallpaperView.swift   playback, crop and filter layers
+├── WallpaperEngine.swift      per-display playback units and playback decisions
+├── PowerMonitor.swift         power, lock-screen and sleep state
+├── SettingsView.swift         SwiftUI settings interface
+└── SelfTest.swift             self-test in an isolated settings domain
 ```
 
-设计背景见 [架构说明](docs/ARCHITECTURE.md)。修改设置、播放、窗口或滤镜逻辑前，请阅读 [维护者笔记](docs/MAINTAINER_NOTES.md)。
+For design background see the [architecture notes](docs/ARCHITECTURE.md). Read the
+[maintainer notes](docs/MAINTAINER_NOTES.md) before changing settings, playback, window
+or filter logic.
 
-## 提交前验证
+## Before you commit
 
-至少运行：
+Run at least:
 
 ```bash
 make test
@@ -68,21 +76,25 @@ git diff --check
 git status --short
 ```
 
-涉及界面、桌面层级、多显示器、热插拔、睡眠唤醒、全局快捷键或开机自启的改动，还需要在真实 macOS 会话中手工验证。
+Changes touching the interface, desktop window level, multiple displays, hot-plugging,
+sleep and wake, global hotkeys or launch at login also need manual verification in a real
+macOS session.
 
-## 隐私与发布卫生
+## Privacy and release hygiene
 
-公开提交只应包含源码、面向用户或贡献者的文档、合成测试数据和构建配置。不要提交：
+A public commit should contain only source code, documentation aimed at users or
+contributors, synthetic test data, and build configuration. Do not commit:
 
-- `.build/`、`build/`、dSYM、对象文件、module cache 或编译数据库
-- 本机绝对路径、真实视频路径、设备标识或账户凭据
-- `.env`、API key、token、私钥或配置导出
-- 本地会话交接、个人背景、其他项目的内部事故记录
-- 未检查元数据的截图、日志、DMG 或压缩包
+- `.build/`, `build/`, dSYM bundles, object files, module caches or compilation databases
+- Absolute paths from your machine, real video paths, device identifiers or account credentials
+- `.env` files, API keys, tokens, private keys or configuration exports
+- Local session handoffs, personal background, or internal incident records from other projects
+- Screenshots, logs, DMGs or archives whose metadata has not been reviewed
 
-发布前应检查当前 tree、可访问 Git 历史与 Release 资产，而不是只扫描最新源码。
+Before publishing, check the current tree, the reachable Git history *and* the release
+assets — not just the latest source.
 
-## Release 检查
+## Release checklist
 
 ```bash
 make clean
@@ -93,4 +105,5 @@ codesign -dvv build/StarPaper.app
 shasum -a 256 build/StarPaper.dmg
 ```
 
-随后挂载 DMG 检查实际文件清单，确认没有 dSYM、日志或其他构建产物，再上传 Release。
+Then mount the DMG and inspect the actual file listing to confirm there is no dSYM, log
+or other build product before uploading the release.

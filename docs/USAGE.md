@@ -1,102 +1,119 @@
-# StarPaper 使用指南
+# StarPaper usage guide
 
-## 系统要求
+**English** · [简体中文](USAGE.zh-CN.md)
 
-- macOS 14 或更高版本
-- 当前 Release 为 Apple silicon 构建
-- 一个 macOS 原生支持的视频文件，例如 mp4 或 mov
+## Requirements
 
-StarPaper 不需要辅助功能、屏幕录制权限，也不需要关闭 SIP。
+- macOS 14 or later
+- The current release is an Apple silicon build
+- A video file macOS supports natively, such as mp4 or mov
 
-## 安装
+StarPaper needs no Accessibility or Screen Recording permission, and does not require
+disabling SIP.
 
-从 [Releases](https://github.com/starsdaisuki/starpaper/releases) 下载 DMG，把 `StarPaper.app` 拖进 `/Applications`。
+## Installation
 
-发布包使用 ad-hoc 签名且未经过 Apple 公证。确认文件来自本仓库后，如果 Gatekeeper 阻止首次启动，运行：
+Download the DMG from [Releases](https://github.com/starsdaisuki/starpaper/releases) and
+drag `StarPaper.app` into `/Applications`.
+
+The release is ad-hoc signed and has not been notarized by Apple. Once you have confirmed
+the file came from this repository, run the following if Gatekeeper blocks the first
+launch:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/StarPaper.app
 ```
 
-从源码构建的方法见 [CONTRIBUTING.md](../CONTRIBUTING.md)。
+For building from source see [CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## 第一次启动
+## First launch
 
-首次运行时，如果还没有选择视频，StarPaper 会自动打开设置窗口。
+If no video has been chosen yet, StarPaper opens the Settings window on first run.
 
-1. 在“内容”页选择视频。
-2. 选择缩放方式：填充、适应或拉伸。
-3. 按需要调整裁剪焦点与缩放。
-4. 关闭设置窗口；StarPaper 会继续在菜单栏运行。
+1. Pick a video on the **Content** tab.
+2. Choose a scaling mode: fill, fit or stretch.
+3. Adjust the crop focus and zoom as needed.
+4. Close Settings; StarPaper keeps running in the menu bar.
 
-菜单栏图标可以暂停、继续、切换到播放列表的下一个视频、静音或打开设置。
+The menu bar icon can pause, resume, skip to the next video in the playlist, mute, or open
+Settings.
 
-## 内容与裁剪
+## Content and cropping
 
-- **填充**：保持宽高比并铺满屏幕，超出部分会被裁掉。
-- **适应**：保持宽高比并完整显示，屏幕边缘可能留黑。
-- **拉伸**：直接匹配屏幕尺寸，可能改变画面比例。
-- **裁剪焦点**：决定填充模式优先保留视频的哪一部分。
-- **缩放**：在铺满屏幕的基础上继续放大。
+- **Fill** — keeps the aspect ratio and covers the screen; the overflow is cropped.
+- **Fit** — keeps the aspect ratio and shows the whole frame; the screen edges may be black.
+- **Stretch** — matches the screen size directly, which may distort the picture.
+- **Crop focus** — decides which part of the video fill mode preserves.
+- **Zoom** — magnifies further on top of covering the screen.
 
-所有显示器目前共用一套视频和裁剪参数，但会按各自宽高比重新计算画面位置。显示器连接状态变化或系统睡眠唤醒后，窗口会自动重建。
+All displays currently share one video and one set of crop parameters, but the frame
+position is recomputed for each display's aspect ratio. Windows are rebuilt automatically
+when displays are connected or disconnected, and after the system wakes from sleep.
 
-桌面图标默认显示在动态壁纸上方，也可以切换为由动态壁纸覆盖。
+Desktop icons appear above the live wallpaper by default; this can be switched so that the
+wallpaper covers them.
 
-## 画面调节
+## Image adjustment
 
-设置中的“画面”页分为三组：
+The **Image** tab in Settings has three groups:
 
-- **影调**：曝光、亮度、对比度、高光、阴影、伽马
-- **色彩**：饱和度、鲜艳度、色温、色调
-- **效果**：模糊、锐化、暗角、暗角范围、变暗遮罩
+- **Tone** — exposure, brightness, contrast, highlights, shadows, gamma
+- **Colour** — saturation, vibrance, temperature, tint
+- **Effects** — blur, sharpness, vignette, vignette radius, dimming mask
 
-“恢复默认画面设置”会清空全部画面调节，但不会更换视频或裁剪参数。
+"Reset image settings" clears every image adjustment but does not change the video or the
+crop parameters.
 
-## 播放列表与日程
+## Playlists and schedules
 
-播放列表支持：
+Playlists support:
 
-- 顺序或随机播放
-- 每段视频播放完后切换
-- 按固定时间间隔切换
+- Sequential or shuffled playback
+- Switching after each video finishes
+- Switching at a fixed interval
 
-日程可以为白天和夜间分别选择视频并设置切换时间。播放来源的优先级为：
+A schedule can select a different video for day and night and set the switching times.
+Playback sources take priority in this order:
 
 ```text
-日程 > 播放列表 > 单个视频
+schedule > playlist > single video
 ```
 
-启用日程后，播放列表和单个视频仍会保留，但当前不会生效。
+Enabling a schedule keeps the playlist and single video configured, but they will not take
+effect while the schedule is active.
 
-## 声音与省电
+## Sound and power saving
 
-声音默认关闭。打开声音后，多显示器环境中只有主屏对应的播放器输出音频，避免重复回声。
+Sound is off by default. Once enabled, only the player on the main display outputs audio
+in a multi-display setup, avoiding an echo.
 
-以下自动暂停条件可以分别开关：
+Each of these auto-pause conditions can be toggled separately:
 
-- 动态壁纸被其他窗口完全遮挡
-- 屏幕锁定
-- 系统进入低电量模式
-- 设备正在使用电池
+- The live wallpaper is fully covered by another window
+- The screen is locked
+- The system enters Low Power Mode
+- The device is running on battery
 
-这些状态恢复后，是否继续播放仍会综合考虑手动暂停和其他暂停条件。
+When these states clear, whether playback resumes still takes manual pause and the other
+pause conditions into account.
 
-## 全局快捷键
+## Global hotkeys
 
-可以为暂停、下一个、静音和打开设置分别录制快捷键。快捷键默认全部为空，并且必须至少包含一个修饰键。
+You can record a separate hotkey for pause, next, mute and opening Settings. All hotkeys
+are empty by default and must include at least one modifier key.
 
-StarPaper 使用 Carbon 的 `RegisterEventHotKey` 注册指定组合，不会请求辅助功能权限，也不会监听全部键盘输入。
+StarPaper registers the specified combination through Carbon's `RegisterEventHotKey`. It
+never requests Accessibility permission and never listens to all keyboard input.
 
-## 命令行
+## Command line
 
-从源码目录运行以下命令，把 CLI 链接到 `~/.local/bin`：
+Run the following from the source directory to link the CLI into `~/.local/bin`:
 
 ```bash
 make link
 ```
 
-确认 `~/.local/bin` 已加入 `PATH` 后，可以使用：
+After confirming `~/.local/bin` is on your `PATH`:
 
 ```bash
 starpaper video "$HOME/Movies/wallpaper.mp4"
@@ -123,19 +140,21 @@ starpaper restart
 starpaper --help
 ```
 
-CLI 是 `defaults` 的薄包装。应用监听设置变化，因此大多数命令会立即生效，不需要重启；“下一个”通过一次性命令通道发送。
+The CLI is a thin wrapper around `defaults`. The app watches for settings changes, so most
+commands take effect immediately without a restart; "next" is sent through a one-shot
+command channel.
 
-结构化的播放列表、日程和快捷键建议使用图形界面修改。
+Structured playlists, schedules and hotkeys are best edited in the graphical interface.
 
-## 配置位置
+## Where settings live
 
-设置保存在当前用户的：
+Settings are stored for the current user in:
 
 ```text
 ~/Library/Preferences/io.github.starsdaisuki.starpaper.plist
 ```
 
-也可以直接使用 `defaults`：
+You can also use `defaults` directly:
 
 ```bash
 defaults write io.github.starsdaisuki.starpaper videoPath -string "/path/to/video.mp4"
@@ -143,26 +162,35 @@ defaults write io.github.starsdaisuki.starpaper dim -float 0.3
 defaults read io.github.starsdaisuki.starpaper
 ```
 
-直接写入配置时请使用应用支持的键和值域。`starpaper reset` 会删除整个配置域，并提示重启应用。
+When writing configuration directly, use keys and value ranges the app supports.
+`starpaper reset` deletes the entire configuration domain and prompts you to restart the
+app.
 
-## 常见问题
+## Troubleshooting
 
-### Gatekeeper 提示应用已损坏
+### Gatekeeper says the app is damaged
 
-当前 Release 没有 Apple Developer 公证。确认 DMG 来自本仓库后，按“安装”一节移除 quarantine 属性。
+The current release is not notarized by Apple. Once you have confirmed the DMG came from
+this repository, remove the quarantine attribute as described under "Installation".
 
-### 看不到菜单栏图标
+### The menu bar icon is missing
 
-先检查 Ice、Bartender 等菜单栏管理器是否把图标折叠或隐藏。退出并重新打开 StarPaper 也会重建菜单栏项目。
+First check whether a menu bar manager such as Ice or Bartender has collapsed or hidden it.
+Quitting and reopening StarPaper also rebuilds the menu bar item.
 
-### 看不到桌面图标
+### Desktop icons are missing
 
-检查系统的“显示桌面项目”设置。即使 StarPaper 位于正确层级，系统关闭桌面项目后 Finder 也不会显示图标。
+Check the system's "Show desktop items" setting. Even when StarPaper is at the correct
+window level, Finder will not draw icons if that setting is off.
 
-### 截图里没有动态壁纸
+### The live wallpaper is missing from a screenshot
 
-没有屏幕录制权限的终端可能得到不包含窗口层的降级截图。不要用这类截图单独判断壁纸窗口是否工作。
+A terminal without Screen Recording permission may capture a degraded screenshot that
+excludes the window layer. Do not judge whether the wallpaper window works from such a
+screenshot alone.
 
-### 壁纸没有播放
+### The wallpaper is not playing
 
-检查菜单栏中的手动暂停状态，以及设置里的遮挡、锁屏、低电量和电池暂停条件。调试能耗或播放问题时，先确认桌面没有被窗口完全遮挡。
+Check the manual pause state in the menu bar, along with the occlusion, lock-screen, Low
+Power Mode and battery pause conditions in Settings. When debugging power draw or
+playback, first confirm the desktop is not fully covered by a window.

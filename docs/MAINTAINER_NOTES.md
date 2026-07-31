@@ -1,84 +1,120 @@
-# StarPaper 维护者笔记
+# StarPaper maintainer notes
 
-这里记录容易被“看起来更简单”的改动破坏的行为不变量。修改相关代码前，请同时阅读 [架构说明](ARCHITECTURE.md)，完成后运行 `make test`。
+**English** · [简体中文](MAINTAINER_NOTES.zh-CN.md)
 
-## 设置层
+This file records behavioural invariants that a "looks simpler" change tends to break.
+Read the [architecture notes](ARCHITECTURE.md) alongside it before changing the relevant
+code, and run `make test` afterwards.
 
-### 不要把 `AppSettings` 改名为 `Settings`
+## Settings layer
 
-SwiftUI 已有 `Settings<Content>` scene。在导入 SwiftUI 的上下文中使用同名类型，会造成解析冲突和难以理解的泛型错误。
+### Do not rename `AppSettings` to `Settings`
 
-### `load()` 必须幂等
+SwiftUI already has a `Settings<Content>` scene. Using the same type name in a context
+that imports SwiftUI causes resolution conflicts and generic errors that are hard to read.
 
-`@Published` 属性即使赋相同的值也会发送 `objectWillChange`。如果 `load()` 无条件赋值，它会触发 `save()`，随后再次收到 `UserDefaults.didChangeNotification`，形成循环。
+### `load()` must be idempotent
 
-所有回读都应通过 `setIfChanged(_:_:)`，只在值真正变化时写内存。
+A `@Published` property emits `objectWillChange` even when assigned the same value. If
+`load()` assigns unconditionally, it triggers `save()`, which then produces another
+`UserDefaults.didChangeNotification`, forming a loop.
 
-### 保存需要两道重入保护
+Every read-back should go through `setIfChanged(_:_:)` so memory is written only when the
+value has genuinely changed.
 
-`UserDefaults` 的逐键写入会逐次发送变化通知。保存第一个键时，如果监听者立刻 `load()`，尚未写入的键会被磁盘旧值覆盖；保存随后可能把旧值重新写回。
+### Saving needs two re-entry guards
 
-必须同时保留：
+`UserDefaults` emits a change notification for each key written. While the first key is
+being saved, a listener that immediately calls `load()` will overwrite the not-yet-written
+keys with stale values from disk, and the save may then write those stale values back.
 
-- `isSaving`：阻止保存过程中的通知重入
-- `hasUnsavedChanges`：阻止 debounce 等待期间从仍是旧值的磁盘回读
+Both of these must be kept:
 
-少任何一个都会重新引入“设置刚修改就弹回原值”的问题。
+- `isSaving` — blocks notification re-entry during the save
+- `hasUnsavedChanges` — blocks read-back from disk during the debounce window, while disk
+  still holds the old values
 
-### 自检不能使用真实设置域
+Dropping either one reintroduces the "setting snaps back the moment you change it" bug.
 
-自检会翻转设置来验证读写。即使测试结束后恢复磁盘值，另一个正在运行的实例也可能在测试期间读到临时值，并在稍后重新保存。
+### The self-test must not use the real settings domain
 
-`SelfTest` 必须使用一次性的 `UserDefaults` suite，通过 `useDefaultsSuite(_:)` 把整个设置层切过去；测试结束后删除该 suite。不要临时写入 `UserDefaults.standard`。
+The self-test flips settings to verify read and write. Even if it restores the values on
+disk afterwards, another running instance may read the temporary values during the test and
+save them again later.
 
-## 窗口与应用生命周期
+`SelfTest` must use a throwaway `UserDefaults` suite, switching the whole settings layer
+over with `useDefaultsSuite(_:)` and deleting the suite when the test finishes. Never write
+to `UserDefaults.standard` temporarily.
 
-### `NSWindow` 子类初始化
+## Windows and app lifecycle
 
-带 `screen:` 参数的 `NSWindow.init(contentRect:styleMask:backing:defer:screen:)` 是 convenience initializer，子类不能通过 `super.init` 调用。使用四参数 designated initializer，再调用 `setFrame`。
+### `NSWindow` subclass initialization
 
-### 主菜单不能省略
+`NSWindow.init(contentRect:styleMask:backing:defer:screen:)` — the one taking `screen:` —
+is a convenience initializer, so a subclass cannot call it through `super.init`. Use the
+four-argument designated initializer and then call `setFrame`.
 
-即使 accessory app 不显示菜单栏，`NSApplication` 仍依靠 `mainMenu` 派发许多 Command 快捷键。没有主菜单时，设置窗口中的 ⌘W、⌘A、⌘V、⌘X、⌘Z 等不会正常工作。
+### The main menu cannot be omitted
 
-保留隐藏的标准菜单项，同时避免随意加入会关闭整个壁纸引擎的快捷动作。
+Even though an accessory app never shows a menu bar, `NSApplication` still relies on
+`mainMenu` to dispatch many Command shortcuts. Without a main menu, ⌘W, ⌘A, ⌘V, ⌘X and ⌘Z
+do not work in the Settings window.
 
-### 桌面图标与菜单栏图标是外部状态
+Keep the hidden standard menu items, while avoiding shortcut actions that would casually
+shut down the whole wallpaper engine.
 
-- Finder 的“显示桌面项目”关闭后，桌面图标本来就不存在，不能据此判断窗口层级错误。
-- Ice、Bartender 等工具可能折叠菜单栏项目，不能仅凭肉眼看不到图标判断 `NSStatusItem` 创建失败。
+### Desktop icons and the menu bar icon are external state
 
-## 播放
+- Once Finder's "Show desktop items" is off, the desktop icons simply do not exist; this is
+  not evidence of a wrong window level.
+- Tools such as Ice or Bartender can collapse menu bar items, so not seeing the icon is not
+  evidence that `NSStatusItem` creation failed.
 
-### `AVPlayerLooper` 与结束切换不能同时使用
+## Playback
 
-looper 用于无缝循环，但不会给播放列表提供最终结束点。“播完切换”模式必须使用单个 player item 和结束通知。
+### `AVPlayerLooper` and switch-on-end cannot be combined
 
-多显示器会为同一视频创建多个播放器。只允许主屏播放单元上报结束，否则一次结束会连续跳过多个列表项目。
+The looper is for seamless looping, but it never gives the playlist a final end point. The
+"switch when finished" mode must use a single player item and the end notification.
 
-### 所有播放条件汇总到一个入口
+Multiple displays create several players for the same video. Only the main screen's unit
+may report the end, otherwise one end event skips several list items in a row.
 
-手动暂停、遮挡、锁屏、睡眠、电池与低电量状态都交给 `WallpaperEngine.updatePlayback()` 汇总。事件处理器不要各自直接决定最终的 play / pause 状态。
+### All playback conditions funnel into one entry point
 
-## 滤镜与裁剪
+Manual pause, occlusion, lock screen, sleep, battery and Low Power Mode are all aggregated
+by `WallpaperEngine.updatePlayback()`. Event handlers must not each decide the final
+play / pause state on their own.
 
-- `CALayer.filters` 使用前必须启用 `layerUsesCoreImageFilters`。
-- 已挂载的 `CIFilter` 不要原地修改；重建整条滤镜链。
-- 默认画面参数不应创建滤镜，避免不必要地改变合成路径。
-- 裁剪持久化 focus + zoom，不要保存某个显示器的固定像素矩形。
-- 模糊需要扩大视频层以覆盖采样边缘，避免出现透明或黑边。
-- 变暗遮罩保持为独立黑色 layer，不要换成亮度加法偏移。
+## Filters and cropping
 
-## 权限与快捷键
+- `layerUsesCoreImageFilters` must be enabled before using `CALayer.filters`.
+- Do not mutate an already-attached `CIFilter` in place; rebuild the whole chain.
+- Default image parameters should create no filter, so the composition path is not changed
+  unnecessarily.
+- Persist crop as focus + zoom, not as a fixed pixel rectangle for one display.
+- Blur needs the video layer enlarged to cover the sampling edge, avoiding transparent or
+  black borders.
+- Keep the dimming mask as a separate black layer; do not replace it with an additive
+  brightness offset.
 
-全局快捷键使用 `RegisterEventHotKey`。不要改成 NSEvent 全局监听；后者需要辅助功能权限，权限范围与功能需求不匹配。
+## Permissions and hotkeys
 
-验证桌面效果时，注意没有屏幕录制权限的截图工具可能返回不包含窗口层的降级截图。
+Global hotkeys use `RegisterEventHotKey`. Do not switch to NSEvent global monitoring; that
+requires Accessibility permission, whose scope does not match what the feature needs.
 
-## 构建与发布
+When verifying the desktop effect, note that a screenshot tool without Screen Recording
+permission may return a degraded screenshot that excludes the window layer.
 
-- `make test` 会先构建 bundle，再在隔离设置域中运行自检。
-- 测试播放或能耗前，确认壁纸没有因为窗口遮挡而暂停。
-- Release 只应包含 `.app` / `.dmg`，不得包含 `.build/`、dSYM、module cache、对象文件或原始构建描述；这些产物可能嵌入本机绝对路径。
-- 发布前检查 DMG 清单、签名状态和架构，并对源码、Git 历史与发布资产做隐私扫描。
-- 不要把本地会话交接、绝对路径、真实媒体文件、设备清单或跨项目笔记提交到公开仓库。
+## Building and releasing
+
+- `make test` builds the bundle first, then runs the self-test in an isolated settings domain.
+- Before testing playback or power draw, confirm the wallpaper is not paused because of
+  window occlusion.
+- A release should contain only the `.app` / `.dmg`, never `.build/`, dSYM bundles, module
+  caches, object files or raw build descriptions — those products can embed absolute paths
+  from the build machine.
+- Before publishing, check the DMG listing, signing status and architecture, and run a
+  privacy scan over the source, the Git history and the release assets.
+- Do not commit local session handoffs, absolute paths, real media files, device inventories
+  or cross-project notes to a public repository.

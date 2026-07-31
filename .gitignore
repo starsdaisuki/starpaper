@@ -1,0 +1,22 @@
+# SwiftPM and local build products
+.build/
+build/
+DerivedData/
+.swiftpm/
+*.app/
+*.dmg
+*.dSYM/
+*.dSYM.zip
+*.xcarchive/
+*.o
+*.pcm
+*.dia
+*.swiftdeps
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+
+# Local editor and generated files
+.DS_Store
+*.xcuserstate
+Resources/AppIcon.iconset/

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# StarPaper 命令行薄壳。
+#
+# 本质就是 `defaults` 的包装 —— app 监听着 UserDefaults 变化，
+# 写完立刻生效，不用重启。真正需要单独通道的只有「下一个」这种一次性动作。
+
+set -euo pipefail
+DOMAIN=io.github.starsdaisuki.starpaper
+APP_NAME=StarPaper
+
+usage() {
+  cat <<'EOF'
+用法: starpaper <命令> [参数]
+
+  video <路径>          换视频
+  pause / resume        暂停 / 继续
+  toggle                暂停⇄继续
+  mute / unmute         静音 / 取消静音
+  next                  下一个（播放列表模式下有意义）
+
+  dim <0-0.9>           变暗遮罩
+  blur <0-60>           模糊
+  vignette <0-2>        暗角
+  saturation <0-2>      饱和度
+  exposure <-2..2>      曝光
+  highlights <0-1>      高光（压最亮的部分）
+  speed <0.25-2>        播放速度
+  volume <0-1>          音量
+
+  set <键> <值>         直接写任意键（数值）
+  set-string <键> <值>  直接写任意键（字符串）
+  get [键]              读配置
+  reset                 清空全部配置（回到默认）
+  restart               重启 app
+
+  快捷键、播放列表、日程这些结构化配置请用图形界面改。
+EOF
+}
+
+num()  { defaults write "$DOMAIN" "$1" -float "$2"; }
+bool() { defaults write "$DOMAIN" "$1" -bool  "$2"; }
+str()  { defaults write "$DOMAIN" "$1" -string "$2"; }
+
+running() { pgrep -x "$APP_NAME" >/dev/null 2>&1; }
+
+[ $# -ge 1 ] || { usage; exit 1; }
+cmd="$1"; shift
+
+case "$cmd" in
+  video)
+    [ $# -eq 1 ] || { echo "要一个文件路径"; exit 1; }
+    # 转成绝对路径，app 那边不认相对路径
+    path="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+    [ -f "$path" ] || { echo "文件不存在: $path"; exit 1; }
+    str videoPath "$path"
+    ;;
+  pause)   bool isPaused true ;;
+  resume)  bool isPaused false ;;
+  toggle)
+    cur=$(defaults read "$DOMAIN" isPaused 2>/dev/null || echo 0)
+    [ "$cur" = "1" ] && bool isPaused false || bool isPaused true
+    ;;
+  mute)    bool muted true ;;
+  unmute)  bool muted false ;;
+  next)
+    running || { echo "StarPaper 没在运行"; exit 1; }
+    str command "next:$(date +%s%N)"
+    ;;
+
+  dim|blur|vignette|saturation|exposure|highlights|volume)
+    [ $# -eq 1 ] || { echo "要一个数值"; exit 1; }
+    key="$cmd"
+    [ "$cmd" = "blur" ] && key=blurRadius
+    num "$key" "$1"
+    ;;
+  speed)
+    [ $# -eq 1 ] || { echo "要一个数值"; exit 1; }
+    num playbackRate "$1"
+    ;;
+
+  set)        [ $# -eq 2 ] || { usage; exit 1; }; num "$1" "$2" ;;
+  set-string) [ $# -eq 2 ] || { usage; exit 1; }; str "$1" "$2" ;;
+  get)
+    if [ $# -eq 1 ]; then defaults read "$DOMAIN" "$1"; else defaults read "$DOMAIN"; fi
+    ;;
+  reset)
+    defaults delete "$DOMAIN" 2>/dev/null || true
+    echo "配置已清空，重启 app 生效：starpaper restart"
+    ;;
+  restart)
+    pkill -x "$APP_NAME" 2>/dev/null || true
+    sleep 0.4
+    open -a "$APP_NAME" 2>/dev/null || open "$(dirname "$0")/../build/$APP_NAME.app"
+    ;;
+
+  -h|--help|help) usage ;;
+  *) echo "不认识的命令: $cmd"; echo; usage; exit 1 ;;
+esac

@@ -1,0 +1,13 @@
+version = 1
+
+[[images]]
+path = "Resources/AppIcon.icns"
+sha256 = "c1a622eeb14fb69200408f0b48832903db42c78bea3f842b0a816394e4124e12"
+visual_reviewed = true
+metadata_reviewed = true
+
+[[images]]
+path = "res/icon.png"
+sha256 = "c911a6afa34fda224ef300266b114137dbfb5bc46a7fd05450bd1393f5949bda"
+visual_reviewed = true
+metadata_reviewed = true

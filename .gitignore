@@ -1,0 +1,36 @@
+# SwiftPM and local build products
+.build/
+.build-appstore/
+build/
+DerivedData/
+.swiftpm/
+*.app/
+*.dmg
+*.dSYM/
+*.dSYM.zip
+*.xcarchive/
+*.o
+*.pcm
+*.dia
+*.swiftdeps
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+
+# Local editor and generated files
+.DS_Store
+*.xcuserstate
+Resources/AppIcon.iconset/
+
+# Local AI/work-session context is never part of the public source tree.
+CLAUDE*.md
+AGENTS*.md
+.claude/
+.codex/
+.cursor/
+MEMORY.md
+**/session-handoff*.md
+**/handoff*.md
+*.jsonl
+.env
+.env.*

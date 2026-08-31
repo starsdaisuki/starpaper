@@ -6,8 +6,9 @@ APPSTORE_BIN := $(APPSTORE_BUILD_DIR)/release/$(APP)
 APPSTORE_BUNDLE := build/$(APP)-AppStore.app
 APPSTORE_PKG := build/$(APP)-AppStore.pkg
 # Mac App Store 描述文件。**不入库**（见 .gitignore）：它和账号绑定，别人 clone 下来也用不了。
-# 生成：Research/tools/macos/asc-profiles.py，或 developer.apple.com → Profiles → +
-#   → Mac App Store → 选 bundle id 与 Apple Distribution 证书 → 下载后放到这个路径。
+# 生成：developer.apple.com → Certificates, Identifiers & Profiles → Profiles → +
+#   → Mac App Store → 选本 app 的 bundle id 与 Apple Distribution 证书
+#   → 下载后放到这个路径（也可以用 App Store Connect API 的 /v1/profiles 建）。
 # ⚠️ 没有它照样能提交审核，只是 altool 会警告 90889：该 build 不能走 TestFlight。
 APPSTORE_PROFILE ?= Resources/$(APP)-AppStore.provisionprofile
 # 实际用于签名的 entitlements。**构建时生成**：以 Resources/*.entitlements 为底，

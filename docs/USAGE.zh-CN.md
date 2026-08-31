@@ -14,10 +14,12 @@ StarPaper 不需要辅助功能、屏幕录制权限，也不需要关闭 SIP。
 
 从 [Releases](https://github.com/starsdaisuki/starpaper/releases) 下载 DMG，把 `StarPaper.app` 拖进 `/Applications`。
 
-发布包使用 ad-hoc 签名且未经过 Apple 公证。确认文件来自本仓库后，如果 Gatekeeper 阻止首次启动，运行：
+DMG 已用 Developer ID 证书签名、经过 Apple 公证并把票据钉进安装包，Gatekeeper 会直接放行，双击即可。想自己确认：
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/StarPaper.app
+spctl -a -vv /Applications/StarPaper.app
+#   accepted
+#   source=Notarized Developer ID
 ```
 
 从源码构建的方法见 [CONTRIBUTING.zh-CN.md](../CONTRIBUTING.zh-CN.md)。
@@ -224,9 +226,9 @@ defaults read io.github.starsdaisuki.starpaper
 
 ## 常见问题
 
-### Gatekeeper 提示应用已损坏
+### Gatekeeper 提示应用已损坏或无法验证开发者
 
-当前 Release 没有 Apple Developer 公证。确认 DMG 来自本仓库后，按“安装”一节移除 quarantine 属性。
+Release 里的 DMG 是公证过的，从 Releases 下载的文件不应该出现这个提示。**本地自己构建**的 `.app` 只有 ad-hoc 签名，会出现，跑 `xattr -dr com.apple.quarantine /Applications/StarPaper.app` 即可。如果下载来的 DMG 被拦，先用 `spctl -a -vv` 验一下再信它 —— 验不过说明文件在传输途中被改过，应该重新下载。
 
 ### 看不到菜单栏图标
 

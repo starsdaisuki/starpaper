@@ -7,8 +7,15 @@ APPSTORE_BUNDLE := build/$(APP)-AppStore.app
 APPSTORE_PKG := build/$(APP)-AppStore.pkg
 INSTALL_DIR := $(HOME)/Applications
 SIGNED_DMG := build/$(APP)-signed.dmg
-# notarytool 的钥匙串凭据名，见 `make notarize-setup`
+# 公证凭据，二选一（notarytool 两种都吃）：
+#   ① App Store Connect API key —— 设 ASC_KEY_ID 与 ASC_ISSUER 即可，私钥默认从
+#      ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 取（也可用 ASC_KEY_P8 指定）。
+#      这条不需要交互式终端，脚本和 CI 里能直接跑完。
+#   ② 钥匙串凭据 profile —— 见 `make notarize-setup`，要在真终端里输一次 app 专用密码。
+# 只要设了 ASC_KEY_ID 就优先走 ①，否则回落到 ②。
 NOTARY_PROFILE ?= starpaper-notary
+ASC_KEY_P8 ?= $(HOME)/.appstoreconnect/private_keys/AuthKey_$(ASC_KEY_ID).p8
+NOTARY_AUTH = $(if $(ASC_KEY_ID),--key "$(ASC_KEY_P8)" --key-id "$(ASC_KEY_ID)" --issuer "$(ASC_ISSUER)",--keychain-profile $(NOTARY_PROFILE))
 
 .PHONY: all build bundle run install clean kill dmg link icon test appstore-build appstore-check appstore-test \
         appstore-distribution-check appstore-package devid-check release-signed notarize-setup
@@ -79,7 +86,15 @@ devid-check:
 # 一次性：把 App Store Connect 凭据存进钥匙串，之后 notarytool 不用再输密码。
 # ⚠️ 这条要你自己在终端跑（要输密码），Makefile 只负责把命令拼对。
 notarize-setup:
-	@echo "在终端里跑这一条（Apple ID 用付费开发者那个账号）："
+	@echo "路线 ①（推荐，不用交互式终端）：用 App Store Connect API key —— "
+	@echo "  把 .p8 放到 ~/.appstoreconnect/private_keys/，然后："
+	@echo ""
+	@echo "  make release-signed ASC_KEY_ID=<KeyID> ASC_ISSUER=<IssuerUUID>"
+	@echo ""
+	@echo "  key 在 App Store Connect → 用户与访问 → 集成 → 单个密钥 里建，"
+	@echo "  角色给 Developer 或 App Manager 即可；.p8 只能下载一次。"
+	@echo ""
+	@echo "路线 ②：钥匙串凭据 profile。⚠️ 这条要你自己在终端里跑（要输密码）："
 	@echo ""
 	@echo "  xcrun notarytool store-credentials $(NOTARY_PROFILE) \\"
 	@echo "    --apple-id <你的 Apple ID> --team-id <TeamID> --password <app 专用密码>"
@@ -103,7 +118,7 @@ release-signed: devid-check bundle
 	@id=$$(security find-identity -v -p codesigning | grep 'Developer ID Application' | head -1 | sed -E 's/.*"(.*)"/\1/'); \
 	codesign --force --timestamp --sign "$$id" $(SIGNED_DMG)
 	@echo "→ 提交公证（首次通常几分钟，--wait 会一直等）"
-	@xcrun notarytool submit $(SIGNED_DMG) --keychain-profile $(NOTARY_PROFILE) --wait
+	@xcrun notarytool submit $(SIGNED_DMG) $(NOTARY_AUTH) --wait
 	@echo "→ 把公证票据钉进 dmg（钉了之后离线也能过 Gatekeeper）"
 	@xcrun stapler staple $(SIGNED_DMG)
 	@echo "→ 验收：以 Gatekeeper 的身份重新评估一次"

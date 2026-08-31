@@ -50,16 +50,18 @@ The current release requires macOS 14 or later and ships an Apple silicon build.
 2. Open the DMG and drag `StarPaper.app` into `/Applications`.
 3. Pick a local video the first time it launches.
 
-The current release is ad-hoc signed and has not been notarized by Apple. If Gatekeeper
-reports that the app is damaged or refuses to open it, confirm the file came from this
-repository's Releases, then run:
+The DMG is signed with a Developer ID certificate, notarized by Apple and stapled, so it
+opens by double-clicking with no Gatekeeper workaround. You can verify that yourself before
+running it:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/StarPaper.app
+spctl -a -vv /Applications/StarPaper.app
+#   accepted
+#   source=Notarized Developer ID
 ```
 
-You can also [build from source](CONTRIBUTING.md); a local build usually needs no
-quarantine removal.
+You can also [build from source](CONTRIBUTING.md). A local build is ad-hoc signed, which is
+fine for your own machine but not for redistribution.
 
 ## Quick start
 
@@ -96,7 +98,6 @@ file bookmarks and your settings stay on your own machine. See the [privacy poli
   one still frame and never decode or redraw. Picture deviation during a switch: 10.6 with
   one window, 1.9 with three
 - No support yet for images, GIFs, or sunrise / sunset switching
-- Release builds are not notarized by Apple
 
 ## Documentation
 
@@ -106,6 +107,12 @@ file bookmarks and your settings stay on your own machine. See the [privacy poli
 - [Spaces, displays and occlusion](docs/SPACES_AND_DISPLAYS.md) — which system signals can be trusted, and how to debug them
 - [Maintainer notes](docs/MAINTAINER_NOTES.md)
 - [Mac App Store readiness](docs/APP_STORE.md)
+
+## Credits
+
+Written by [starsdaisuki](https://github.com/starsdaisuki) together with
+[Claude](https://claude.com/claude-code) (Anthropic), which paired on the design, the
+implementation and most of the debugging.
 
 ## License
 

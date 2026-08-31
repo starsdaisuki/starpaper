@@ -16,12 +16,13 @@ disabling SIP.
 Download the DMG from [Releases](https://github.com/starsdaisuki/starpaper/releases) and
 drag `StarPaper.app` into `/Applications`.
 
-The release is ad-hoc signed and has not been notarized by Apple. Once you have confirmed
-the file came from this repository, run the following if Gatekeeper blocks the first
-launch:
+The DMG is signed with a Developer ID certificate, notarized by Apple and stapled, so
+Gatekeeper lets it open by double-clicking. To check that for yourself:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/StarPaper.app
+spctl -a -vv /Applications/StarPaper.app
+#   accepted
+#   source=Notarized Developer ID
 ```
 
 For building from source see [CONTRIBUTING.md](../CONTRIBUTING.md).
@@ -262,10 +263,13 @@ app.
 
 ## Troubleshooting
 
-### Gatekeeper says the app is damaged
+### Gatekeeper says the app is damaged or cannot be verified
 
-The current release is not notarized by Apple. Once you have confirmed the DMG came from
-this repository, remove the quarantine attribute as described under "Installation".
+Released DMGs are notarized, so this should not happen with a file downloaded from
+Releases. It does happen with a locally built `.app`, which is only ad-hoc signed: run
+`xattr -dr com.apple.quarantine /Applications/StarPaper.app`. If a downloaded DMG is
+rejected, verify it with `spctl -a -vv` before trusting it — a failure there means the file
+was altered in transit and should be downloaded again.
 
 ### The menu bar icon is missing
 

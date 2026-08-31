@@ -29,9 +29,11 @@ make clean      # remove .build and build
 `make run` and `make kill` terminate the currently running StarPaper instance. Use
 `make build` or `make bundle` when you only want to verify that it compiles.
 
-For personal use you can open `build/StarPaper.app` directly; no DMG is needed. The DMG
-is packaging for distribution. The current Makefile uses ad-hoc signing and does not
-perform Apple notarization.
+For personal use you can open `build/StarPaper.app` directly; no DMG is needed. `make
+bundle` and `make dmg` produce ad-hoc signed output, which is fine locally but is rejected
+by Gatekeeper on someone else's machine. Released DMGs are built with `make
+release-signed`, which adds Developer ID signing, Hardened Runtime, notarization and
+stapling; see [Maintainer notes](docs/MAINTAINER_NOTES.md).
 
 ## Code layout
 

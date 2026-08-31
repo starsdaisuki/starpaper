@@ -41,13 +41,15 @@ StarPaper 不需要关闭 SIP，也不需要辅助功能或屏幕录制权限。
 2. 打开 DMG，把 `StarPaper.app` 拖进 `/Applications`。
 3. 首次启动时选择一个本地视频。
 
-当前发布包使用 ad-hoc 签名，未经过 Apple 公证。Gatekeeper 如果提示应用“已损坏”或无法打开，请确认文件来自本仓库的 Release，再运行：
+DMG 已用 Developer ID 证书签名、经过 Apple 公证并把票据钉进安装包，双击即可打开，不需要任何绕过 Gatekeeper 的操作。运行前你也可以自己验一下：
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/StarPaper.app
+spctl -a -vv /Applications/StarPaper.app
+#   accepted
+#   source=Notarized Developer ID
 ```
 
-也可以[从源码构建](CONTRIBUTING.zh-CN.md)，本地构建通常不需要移除 quarantine 属性。
+也可以[从源码构建](CONTRIBUTING.zh-CN.md)。本地构建走的是 ad-hoc 签名，自己用没问题，但不适合再分发给别人。
 
 ## 快速使用
 
@@ -71,7 +73,6 @@ xattr -dr com.apple.quarantine /Applications/StarPaper.app
 - 开了声音时，负责出声的那一份播放器不会跟着桌面暂停，否则每切一次桌面音频都要重新起播（听感是卡一下）。代价是你不在它那个桌面时多一路解码；静音时没有这个代价，「被窗口遮挡时暂停」也照样能压过它
 - 「每个桌面叠几扇壁纸窗」默认 3（实测最优），窗口数变成 4 桌面 × 3 = 12 扇；实测 CPU 与内存增量都在噪声里 —— 衬窗只挂一张静止画面，不解码也不重绘。切桌面时的画面偏离：1 扇 10.6 → 3 扇 1.9
 - 暂不支持图片、GIF 或按日出日落自动切换
-- 发布包没有 Apple Developer 公证
 
 ## 文档
 
@@ -81,6 +82,10 @@ xattr -dr com.apple.quarantine /Applications/StarPaper.app
 - [桌面、显示器与遮挡](docs/SPACES_AND_DISPLAYS.zh-CN.md) —— 哪些系统信号能信，以及怎么调试
 - [维护者笔记](docs/MAINTAINER_NOTES.zh-CN.md)
 - [Mac App Store 上架准备](docs/APP_STORE.md)
+
+## 致谢
+
+由 [starsdaisuki](https://github.com/starsdaisuki) 与 [Claude](https://claude.com/claude-code)（Anthropic）共同编写 —— 设计、实现和绝大部分调试都是两个人一起做的。
 
 ## License
 

@@ -27,7 +27,7 @@ make clean      # 删除 .build 与 build
 
 `make run` 和 `make kill` 会结束当前运行的 StarPaper 实例。只想验证编译时使用 `make build` 或 `make bundle`。
 
-本地自用可以直接打开 `build/StarPaper.app`，不需要 DMG。DMG 是对外分发包装；当前 Makefile 使用 ad-hoc 签名，不执行 Apple 公证。
+本地自用可以直接打开 `build/StarPaper.app`，不需要 DMG。`make bundle` 和 `make dmg` 产出的是 ad-hoc 签名，自己机器上没问题，但到别人机器上会被 Gatekeeper 拦。正式发布的 DMG 由 `make release-signed` 产出，额外做 Developer ID 签名、Hardened Runtime、公证与 stapling，见[维护者笔记](docs/MAINTAINER_NOTES.zh-CN.md)。
 
 ## 代码结构
 

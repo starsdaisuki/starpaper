@@ -5,7 +5,7 @@ SkyLight private API, which App Review Guideline 2.5.1 does not allow.
 
 | Variant | Desktop placement | File access | CLI | Signing |
 |---|---|---|---|---|
-| Direct / GitHub | Per-desktop SkyLight path with public fallback | Security-scoped bookmarks plus ordinary local access | Available | Ad-hoc today; Developer ID + notarization for a public release |
+| Direct / GitHub | Per-desktop SkyLight path with public fallback | Security-scoped bookmarks plus ordinary local access | Available | Developer ID + notarization (`make release-signed`) |
 | Mac App Store | Public `.canJoinAllSpaces` path only | App Sandbox + read-only user-selected bookmarks | Not distributed or shown | Apple Distribution + provisioning profile |
 
 `make appstore-test` builds a local ad-hoc sandboxed inspection bundle. It verifies the

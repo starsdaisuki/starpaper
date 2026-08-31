@@ -17,7 +17,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/build/StarPaper.app"
-PREVIEW_ID="io.github.starsdaisuki.starpaper.preview"
+PREVIEW_ID="com.starsdaisuki.starpaper.preview"
 PREVIEW_APP="$HOME/Applications/StarPaper Preview.app"
 
 # 先把两份都停掉：同时跑会互相盖壁纸，看不出首启是什么样

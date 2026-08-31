@@ -248,8 +248,8 @@ private let strings: [String: (String, String)] = [
 
     // 外部配置
     "general.external":    ("外部配置", "External Config"),
-    "general.externalHint":("用 defaults write io.github.starsdaisuki.starpaper … 改配置会即时生效，不用重启 app。",
-                            "Changes made with `defaults write io.github.starsdaisuki.starpaper …` apply immediately — no restart needed."),
+    "general.externalHint":("用 defaults write com.starsdaisuki.starpaper … 改配置会即时生效，不用重启 app。",
+                            "Changes made with `defaults write com.starsdaisuki.starpaper …` apply immediately — no restart needed."),
     "general.privacy":     ("隐私", "Privacy"),
     "general.privacyPolicy":("查看隐私政策…", "View Privacy Policy…"),
     "general.privacyHint": ("视频只在本机读取和播放；StarPaper 不联网，不收集或上传数据。",

@@ -14,7 +14,7 @@ import Foundation
 /// ## 怎么开
 ///
 /// ```
-/// defaults write io.github.starsdaisuki.starpaper debugLog -bool true   # 然后重启 app
+/// defaults write com.starsdaisuki.starpaper debugLog -bool true   # 然后重启 app
 /// STARPAPER_DEBUGLOG=1 open -n ~/Applications/StarPaper.app             # 或者只开这一次
 /// tail -f ~/Library/Logs/StarPaper.log
 /// ```

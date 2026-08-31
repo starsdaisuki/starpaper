@@ -210,16 +210,16 @@ CLI 是 `defaults` 的薄包装。应用监听设置变化，因此大多数命�
 设置保存在当前用户的：
 
 ```text
-~/Library/Preferences/io.github.starsdaisuki.starpaper.plist
+~/Library/Preferences/com.starsdaisuki.starpaper.plist
 ```
 
 也可以直接使用 `defaults`：
 
 ```bash
-defaults write io.github.starsdaisuki.starpaper videoPath -string "/path/to/video.mp4"
-defaults write io.github.starsdaisuki.starpaper dim -float 0.3
-defaults write io.github.starsdaisuki.starpaper backingLayers -int 6
-defaults read io.github.starsdaisuki.starpaper
+defaults write com.starsdaisuki.starpaper videoPath -string "/path/to/video.mp4"
+defaults write com.starsdaisuki.starpaper dim -float 0.3
+defaults write com.starsdaisuki.starpaper backingLayers -int 6
+defaults read com.starsdaisuki.starpaper
 ```
 
 直接写入配置时请使用应用支持的键和值域。`starpaper reset` 会删除整个配置域，并提示重启应用。

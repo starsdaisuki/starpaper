@@ -5,7 +5,7 @@
 # 写完立刻生效，不用重启。真正需要单独通道的只有「下一个」这种一次性动作。
 
 set -euo pipefail
-DOMAIN=io.github.starsdaisuki.starpaper
+DOMAIN=com.starsdaisuki.starpaper
 APP_NAME=StarPaper
 
 usage() {

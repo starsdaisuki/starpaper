@@ -11,7 +11,7 @@
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>io.github.starsdaisuki.starpaper</string>
+	<string>com.starsdaisuki.starpaper</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>

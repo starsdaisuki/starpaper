@@ -245,16 +245,16 @@ The structured video library, schedules and hotkeys are best edited in the graph
 Settings are stored for the current user in:
 
 ```text
-~/Library/Preferences/io.github.starsdaisuki.starpaper.plist
+~/Library/Preferences/com.starsdaisuki.starpaper.plist
 ```
 
 You can also use `defaults` directly:
 
 ```bash
-defaults write io.github.starsdaisuki.starpaper videoPath -string "/path/to/video.mp4"
-defaults write io.github.starsdaisuki.starpaper dim -float 0.3
-defaults write io.github.starsdaisuki.starpaper backingLayers -int 6
-defaults read io.github.starsdaisuki.starpaper
+defaults write com.starsdaisuki.starpaper videoPath -string "/path/to/video.mp4"
+defaults write com.starsdaisuki.starpaper dim -float 0.3
+defaults write com.starsdaisuki.starpaper backingLayers -int 6
+defaults read com.starsdaisuki.starpaper
 ```
 
 When writing configuration directly, use keys and value ranges the app supports.

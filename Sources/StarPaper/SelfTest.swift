@@ -18,7 +18,7 @@ enum SelfTest {
     }
 
     /// 自检专用的一次性设置域。⚠️ 见 `AppSettings.useDefaultsSuite`
-    private static let testSuiteName = "io.github.starsdaisuki.starpaper.selftest"
+    private static let testSuiteName = "com.starsdaisuki.starpaper.selftest"
     private static var testSuite: UserDefaults!
     /// 开测前真实域的快照，跑完要对得上（自检不许改坏用户的配置）
     private static var realDomainBefore: [String: String] = [:]

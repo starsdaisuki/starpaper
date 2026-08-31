@@ -12,10 +12,30 @@ SkyLight private API, which App Review Guideline 2.5.1 does not allow.
 entitlements, runs the self-test, and scans the raw Mach-O bytes for private SkyLight / CGS
 names and absolute build paths from the developer's machine. It is deliberately **not** an uploadable App Store package.
 
-Before submission, add a real Xcode macOS app target (or an equivalent Apple-supported
-archive workflow), configure the App Store profile and Apple Distribution signing, then
-archive and validate the exact submitted product. The target must define
-`STARPAPER_APPSTORE` and use `Resources/StarPaper-AppStore.entitlements`.
+An Xcode app target is **not** required. `make appstore-package` produces a package that
+App Store Connect accepts: verified on 2026-08-31 with
+`xcrun altool --validate-app -t macos`, which reported `VERIFY SUCCEEDED with no errors`,
+followed by a successful `--upload-app`.
+
+TestFlight needs two more things beyond a valid signature, and each one is reported as a
+warning rather than an error, so a package can upload cleanly and still be ineligible:
+
+- `Contents/embedded.provisionprofile`, a Mac App Store provisioning profile. Without it,
+  warning **90889**.
+- `com.apple.application-identifier` and `com.apple.developer.team-identifier` in the
+  signed entitlements, matching the ones inside that profile. With a profile but without
+  these, warning **90886**.
+
+`make appstore-check` handles both: it copies `$(APPSTORE_PROFILE)` into the bundle and
+merges those two keys out of the profile into `build/appstore-entitlements.plist`, which is
+what actually gets signed. The keys are read from the profile at build time rather than
+committed, so no team identifier lives in this repository. The profile itself is not
+committed either — it is account-bound and useless to anyone else. Generate one from
+developer.apple.com under Profiles, choosing Mac App Store, this bundle identifier and the
+Apple Distribution certificate, then save it to `Resources/StarPaper-AppStore.provisionprofile`.
+
+Without a profile the package still uploads and can be submitted for review; only
+TestFlight is lost.
 
 Still required outside the source tree:
 
@@ -38,6 +58,13 @@ SkyLight 方案；App Store 版在编译期彻底移除私有 API，退回公开
 `.canJoinAllSpaces` 方案。Store 版同时启用 App Sandbox 和只读持久 bookmark，
 但不分发 CLI，也不显示私有 API 专属的设置。
 
-`make appstore-test` 只产生本地 ad-hoc 沙盒体检包，不是可上传包。真正提交前还要
-建 Xcode macOS App target，配置 Apple Distribution 证书和 provisioning profile，再对
-最终 `.app` / archive / 上传包做原始字节级隐私扫描。
+`make appstore-test` 只产生本地 ad-hoc 沙盒体检包，不是可上传包；可上传包走
+`make appstore-package`。**不需要建 Xcode App target** —— 2026-08-31 已用
+`altool --validate-app` 实测 `VERIFY SUCCEEDED with no errors` 并成功上传。
+仍要对最终 `.app` 与上传包做原始字节级隐私扫描。
+
+⚠️ TestFlight 的两个额外条件都只报**警告**不报错误，所以包能干净上传却依然不能用于
+TestFlight：缺 `embedded.provisionprofile` 报 90889；有描述文件但签名 entitlements 里
+缺 `com.apple.application-identifier` / `com.apple.developer.team-identifier` 报 90886。
+`make appstore-check` 两件都做了，且那两个值是**构建时从描述文件里读**的，
+不把 Team ID 写进仓库。

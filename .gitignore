@@ -34,3 +34,6 @@ MEMORY.md
 *.jsonl
 .env
 .env.*
+
+# Mac App Store 描述文件：和账号绑定，各自生成，不入库
+Resources/*.provisionprofile

@@ -5,6 +5,18 @@ APPSTORE_BUILD_DIR := .build-appstore
 APPSTORE_BIN := $(APPSTORE_BUILD_DIR)/release/$(APP)
 APPSTORE_BUNDLE := build/$(APP)-AppStore.app
 APPSTORE_PKG := build/$(APP)-AppStore.pkg
+# Mac App Store 描述文件。**不入库**（见 .gitignore）：它和账号绑定，别人 clone 下来也用不了。
+# 生成：Research/tools/macos/asc-profiles.py，或 developer.apple.com → Profiles → +
+#   → Mac App Store → 选 bundle id 与 Apple Distribution 证书 → 下载后放到这个路径。
+# ⚠️ 没有它照样能提交审核，只是 altool 会警告 90889：该 build 不能走 TestFlight。
+APPSTORE_PROFILE ?= Resources/$(APP)-AppStore.provisionprofile
+# 实际用于签名的 entitlements。**构建时生成**：以 Resources/*.entitlements 为底，
+# 若存在描述文件，就把它里面的 com.apple.application-identifier 与
+# com.apple.developer.team-identifier 读出来合进去。
+# ⭐ 这么做是为了**不把 Team ID 写进源码仓**（公开仓不放账号标识符），
+#    同时满足 TestFlight 的要求：签名里的 app 标识符必须和描述文件里的一致，
+#    否则 altool 报 90886（能提交审核，但不能走 TestFlight）。
+APPSTORE_ENT := build/appstore-entitlements.plist
 INSTALL_DIR := $(HOME)/Applications
 SIGNED_DMG := build/$(APP)-signed.dmg
 # 公证凭据，二选一（notarytool 两种都吃）：
@@ -149,8 +161,21 @@ appstore-check: appstore-build
 	@cp Resources/PrivacyInfo.xcprivacy $(APPSTORE_BUNDLE)/Contents/Resources/PrivacyInfo.xcprivacy
 	@cp Resources/blackhole-demo.mp4 $(APPSTORE_BUNDLE)/Contents/Resources/blackhole-demo.mp4
 	@printf 'APPL????' > $(APPSTORE_BUNDLE)/Contents/PkgInfo
+	@cp Resources/$(APP)-AppStore.entitlements $(APPSTORE_ENT)
+	@if [ -f "$(APPSTORE_PROFILE)" ]; then \
+		cp "$(APPSTORE_PROFILE)" $(APPSTORE_BUNDLE)/Contents/embedded.provisionprofile; \
+		security cms -D -i "$(APPSTORE_PROFILE)" \
+			| plutil -extract Entitlements xml1 -o build/profile-entitlements.plist -; \
+		appid=$$(/usr/libexec/PlistBuddy -c "Print :com.apple.application-identifier" build/profile-entitlements.plist); \
+		team=$$(/usr/libexec/PlistBuddy -c "Print :com.apple.developer.team-identifier" build/profile-entitlements.plist); \
+		/usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $$appid" $(APPSTORE_ENT); \
+		/usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $$team" $(APPSTORE_ENT); \
+		echo "→ 已嵌入描述文件，并把 $$appid 合进 entitlements（TestFlight 需要）"; \
+	else \
+		echo "⚠️  找不到 $(APPSTORE_PROFILE)：包仍可提交审核，但 altool 会警告 90889，该 build 不能走 TestFlight"; \
+	fi
 	@codesign --force --sign - --timestamp=none --options runtime \
-		--entitlements Resources/StarPaper-AppStore.entitlements $(APPSTORE_BUNDLE)
+		--entitlements $(APPSTORE_ENT) $(APPSTORE_BUNDLE)
 	@! LC_ALL=C rg -a -q 'SkyLight[.]framework|CGS(MainConnectionID|CopyManagedDisplaySpaces|MoveWindowsToManagedSpace|CopySpacesForWindows)' $(APPSTORE_BUNDLE)/Contents/MacOS/$(APP)
 	@! LC_ALL=C rg -a -q '/Users/' $(APPSTORE_BUNDLE)/Contents/MacOS/$(APP)
 	@codesign --verify --deep --strict --verbose=2 $(APPSTORE_BUNDLE)
@@ -187,7 +212,7 @@ appstore-package: appstore-check appstore-distribution-check
 		sed -n 's/.*"\(3rd Party Mac Developer Installer:[^"]*\)".*/\1/p' | head -1); \
 	echo "→ Apple Distribution 签名 .app"; \
 	codesign --force --options runtime --timestamp --sign "$$app" \
-		--entitlements Resources/StarPaper-AppStore.entitlements $(APPSTORE_BUNDLE); \
+		--entitlements $(APPSTORE_ENT) $(APPSTORE_BUNDLE); \
 	codesign --verify --deep --strict --verbose=2 $(APPSTORE_BUNDLE); \
 	[ ! -e "$(APPSTORE_PKG)" ] || /usr/bin/trash "$(APPSTORE_PKG)"; \
 	echo "→ Mac Installer Distribution 签名 .pkg"; \

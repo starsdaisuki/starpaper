@@ -228,7 +228,15 @@ defaults read io.github.starsdaisuki.starpaper
 
 ### Gatekeeper 提示应用已损坏或无法验证开发者
 
-Release 里的 DMG 是公证过的，从 Releases 下载的文件不应该出现这个提示。**本地自己构建**的 `.app` 只有 ad-hoc 签名，会出现，跑 `xattr -dr com.apple.quarantine /Applications/StarPaper.app` 即可。如果下载来的 DMG 被拦，先用 `spctl -a -vv` 验一下再信它 —— 验不过说明文件在传输途中被改过，应该重新下载。
+Release 里的 DMG 是公证过的，从 Releases 下载的文件不应该出现这个提示。**本地自己构建**的 `.app` 只有 ad-hoc 签名，会出现，跑 `xattr -dr com.apple.quarantine /Applications/StarPaper.app` 即可。
+
+如果**下载来的** DMG 被拦，先验一下，别直接上 `xattr`：
+
+```bash
+spctl -a -vv /Applications/StarPaper.app
+```
+
+出 `source=Notarized Developer ID` 说明签名本身是好的、问题在别处（签名证书被吊销或不再可用就会这样），这时上面那条 `xattr` 就是有效的应急出口。出别的结果说明这个文件不是这里发布的那一份 —— 传输途中被改过，或者根本来自别处 —— 应该重新下载，而不是强行打开。
 
 ### 看不到菜单栏图标
 

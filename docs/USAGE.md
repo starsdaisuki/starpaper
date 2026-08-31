@@ -267,9 +267,19 @@ app.
 
 Released DMGs are notarized, so this should not happen with a file downloaded from
 Releases. It does happen with a locally built `.app`, which is only ad-hoc signed: run
-`xattr -dr com.apple.quarantine /Applications/StarPaper.app`. If a downloaded DMG is
-rejected, verify it with `spctl -a -vv` before trusting it — a failure there means the file
-was altered in transit and should be downloaded again.
+`xattr -dr com.apple.quarantine /Applications/StarPaper.app`.
+
+If a **downloaded** DMG is rejected, check it first — do not skip straight to `xattr`:
+
+```bash
+spctl -a -vv /Applications/StarPaper.app
+```
+
+`source=Notarized Developer ID` means the signature is intact and something else is wrong
+(a revoked or otherwise unusable signing certificate would do it); the same `xattr` command
+is then a valid escape hatch. Any other result means the file is not the one published
+here — it was altered in transit or came from somewhere else — and should be downloaded
+again rather than forced open.
 
 ### The menu bar icon is missing
 

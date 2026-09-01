@@ -35,13 +35,26 @@ StarPaper 不需要关闭 SIP，也不需要辅助功能或屏幕录制权限。
 
 ## 下载与安装
 
-当前 Release 需要 macOS 14 或更高版本，并提供 Apple silicon 构建。
+需要 macOS 14 或更高版本，Apple silicon。
 
-1. 从 [Releases](https://github.com/starsdaisuki/starpaper/releases) 下载 `StarPaper.dmg`。
-2. 打开 DMG，把 `StarPaper.app` 拖进 `/Applications`。
-3. 首次启动时选择一个本地视频。
+1. 打开 [**Releases**](https://github.com/starsdaisuki/starpaper/releases)，下载
+   **`StarPaper.dmg`** —— 这个才是 app。
+   （下面的 "Source code (zip)" 和 "(tar.gz)" 不用管，那是 GitHub 自动加的源码包。）
+2. 双击下载好的 DMG，把里面的 **StarPaper** 拖到旁边的 **Applications** 文件夹上。
+3. 打开「应用程序」，双击 **StarPaper**。它会立刻开始播放内置示例视频，
+   同时弹出设置窗口，你可以在那里换成自己的视频。
 
-DMG 已用 Developer ID 证书签名、经过 Apple 公证并把票据钉进安装包，双击即可打开，不需要任何绕过 Gatekeeper 的操作。运行前你也可以自己验一下：
+就这样。DMG 已用 Developer ID 证书签名、经 Apple 公证并钉了票据，所以
+**不需要右键打开、不需要去「系统设置」点「仍要打开」、也不需要敲任何终端命令。**
+
+StarPaper 住在菜单栏，随时点它的图标就能重新打开设置。
+
+> **从 Mac App Store 版切过来？** 两个版本可以共存，但**设置不互通**。
+> App Store 版是沙盒 app，偏好设置存在它自己的容器里，所以装了这个版本之后要重新选一次视频。
+> 反过来，在已经装了这个版本的 Mac 上装 App Store 版，系统会把这个版本的偏好设置**搬进**那个容器。
+
+<details>
+<summary>想自己验一下签名（可选）</summary>
 
 ```bash
 spctl -a -vv /Applications/StarPaper.app
@@ -49,7 +62,9 @@ spctl -a -vv /Applications/StarPaper.app
 #   source=Notarized Developer ID
 ```
 
-也可以[从源码构建](CONTRIBUTING.zh-CN.md)。本地构建走的是 ad-hoc 签名，自己用没问题，但不适合再分发给别人。
+</details>
+
+也可以[从源码构建](CONTRIBUTING.zh-CN.md)。本地构建走 ad-hoc 签名，自己用没问题，但不适合再分发给别人。
 
 ## 快速使用
 

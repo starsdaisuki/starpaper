@@ -44,21 +44,38 @@ turn the option off in Settings to stay entirely on public API.
 
 ## Download and install
 
-The current release requires macOS 14 or later and ships an Apple silicon build.
+Requires macOS 14 or later. Apple silicon.
 
-1. Download `StarPaper.dmg` from [Releases](https://github.com/starsdaisuki/starpaper/releases).
-2. Open the DMG and drag `StarPaper.app` into `/Applications`.
-3. Pick a local video the first time it launches.
+1. Open [**Releases**](https://github.com/starsdaisuki/starpaper/releases) and download
+   **`StarPaper.dmg`** — that is the app. (Ignore "Source code (zip)" and
+   "Source code (tar.gz)"; GitHub adds those to every release automatically.)
+2. Double-click the downloaded DMG, then drag **StarPaper** onto the **Applications**
+   folder shown next to it.
+3. Open Applications and double-click **StarPaper**. It starts playing a built-in demo
+   clip right away, and the Settings window opens so you can pick your own video.
 
-The DMG is signed with a Developer ID certificate, notarized by Apple and stapled, so it
-opens by double-clicking with no Gatekeeper workaround. You can verify that yourself before
-running it:
+That is all. The DMG is signed with a Developer ID certificate, notarized by Apple and
+stapled, so **no right-click-to-open, no "allow anyway" in System Settings, and no
+terminal command is needed.**
+
+StarPaper lives in the menu bar. Click its icon any time to reopen Settings.
+
+> **Coming from the Mac App Store version?** You can keep both, but **they do not share
+> settings.** The App Store build is sandboxed and keeps its preferences inside its own
+> container, so after installing this build you will need to pick your video again.
+> Installing the App Store build on a Mac that already has this one also moves this
+> build's preferences into that container.
+
+<details>
+<summary>Verify the signature yourself (optional)</summary>
 
 ```bash
 spctl -a -vv /Applications/StarPaper.app
 #   accepted
 #   source=Notarized Developer ID
 ```
+
+</details>
 
 You can also [build from source](CONTRIBUTING.md). A local build is ad-hoc signed, which is
 fine for your own machine but not for redistribution.

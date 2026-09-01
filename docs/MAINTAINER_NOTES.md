@@ -46,6 +46,41 @@ save them again later.
 over with `useDefaultsSuite(_:)` and deleting the suite when the test finishes. Never write
 to `UserDefaults.standard` temporarily.
 
+### An external `defaults write` is discarded if the app is running when it quits
+
+`applicationWillTerminate` calls `settings.save()`, which flushes the in-memory settings
+over whatever is on disk. So writing settings from outside while the app runs and *then*
+quitting loses every one of those writes — including ones a `defaults read` had already
+confirmed were on disk.
+
+Any script that configures the app from outside must use this order:
+
+```sh
+osascript -e 'tell application "StarPaper" to quit'   # 1. quit first
+defaults write com.starsdaisuki.starpaper <key> <value>  # 2. then write
+open -a StarPaper                                      # 3. then launch
+```
+
+Verified 2026-09-01: writing `videoPath` plus six clock keys while the app was running and
+then restarting applied none of them; the same writes with the app already quit applied all
+of them.
+
+### Not every setting is live — the clock colours are read only at launch
+
+`bin/starpaper` documents the settings channel as "takes effect immediately, no restart
+needed". That is not true for all keys.
+
+- `videoPath` **does** hot-reload from an external `defaults write` (verified visually:
+  the wallpaper switched while the app kept running).
+- `clockColorHex` / `clockGlowColorHex` **do not**. Three different colours written to a
+  running app rendered identically; quitting, writing, and relaunching applied the colour
+  immediately.
+
+`AppSettings.load()` does read both keys through `setIfChanged`, and `LiveSettingsRelay`
+observes `objectWillChange` generically — so the gap is further down, between the settings
+value changing and the already-built clock layer being told about it. Either wire the clock
+colours through to `ClockOverlay.apply(_:)` on change, or fix the claim in `bin/starpaper`.
+
 ## Windows and app lifecycle
 
 ### `NSWindow` subclass initialization
@@ -139,6 +174,15 @@ missing `integer(forKey:)` returns `0`, and `load()` clamps `0` back up to the l
 `1` — **exactly the default value**, so a value assertion still passes. Assert existence too.
 
 ## Settings UI
+
+### The settings window is a fixed 620x576 and its content overflows
+
+`AXSize` is refused on it, so the window cannot be resized by script or by the user. Several
+tabs are taller than the window, so the last hint line is always cut mid-sentence at the
+bottom edge. It looks like a rendering bug in App Store screenshots.
+
+The Clock tab is the one whose content lands closest to a clean bottom edge; Content and
+Image both clip mid-sentence.
 
 ### Never nest a `List` inside a `Form`
 

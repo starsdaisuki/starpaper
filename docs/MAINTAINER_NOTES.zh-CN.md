@@ -33,6 +33,35 @@ SwiftUI 已有 `Settings<Content>` scene。在导入 SwiftUI 的上下文中使�
 
 `SelfTest` 必须使用一次性的 `UserDefaults` suite，通过 `useDefaultsSuite(_:)` 把整个设置层切过去；测试结束后删除该 suite。不要临时写入 `UserDefaults.standard`。
 
+### app 运行时从外部写设置，退出那一刻会被丢弃
+
+`applicationWillTerminate` 会调用 `settings.save()`，把内存里的设置刷到磁盘、覆盖掉外部写入。
+所以「app 开着的时候用 `defaults write` 改设置，然后退出重开」会**丢掉全部改动** ——
+哪怕中途用 `defaults read` 确认过磁盘上已经写进去了。
+
+任何从外部配置这个 app 的脚本都必须按这个顺序：
+
+```sh
+osascript -e 'tell application "StarPaper" to quit'      # 1. 先退出
+defaults write com.starsdaisuki.starpaper <键> <值>       # 2. 再写
+open -a StarPaper                                        # 3. 最后启动
+```
+
+2026-09-01 实测：app 运行中写入 `videoPath` 和六个时钟键后重启，**一条都没生效**；
+先退出再写同样的内容，全部生效。
+
+### 不是所有设置都实时生效 —— 时钟颜色只在启动时读一次
+
+`bin/starpaper` 里把设置通道描述为「写完立刻生效，不用重启」。**这句话不是对所有键都成立。**
+
+- `videoPath` **确实**能从外部 `defaults write` 热更新（已用画面验证：app 一直在跑，壁纸切了）。
+- `clockColorHex` / `clockGlowColorHex` **不能**。对运行中的 app 写三个不同颜色，
+  渲染出来三张一模一样；退出、写入、重开之后颜色立刻生效。
+
+`AppSettings.load()` 里通过 `setIfChanged` 读了这两个键，`LiveSettingsRelay` 也是泛化地监听
+`objectWillChange` —— 所以断点在更下游：设置值变了，但没人通知已经建好的时钟图层。
+要么把时钟颜色接到 `ClockOverlay.apply(_:)` 的变更路径上，要么修正 `bin/starpaper` 里那句说明。
+
 ## 窗口与应用生命周期
 
 ### `NSWindow` 子类初始化
@@ -113,6 +142,13 @@ print(Set(all.compactMap { w -> String? in
 而 `load()` 会把 `0` 夹回合法下限 `1` —— **正好等于默认值**，值断言照样绿。同样要验键存在。
 
 ## 设置界面
+
+### 设置窗口固定 620x576，内容装不下
+
+它拒绝 `AXSize`，脚本和用户都改不了大小。有几个标签页的内容比窗口高，
+底部那行提示文字**永远断在句子中间**，在 App Store 截图里看着像渲染 bug。
+
+Clock 标签页的内容底边最干净；Content 和 Image 都会切在半句话上。
 
 ### `Form` 里不能再套 `List`
 
